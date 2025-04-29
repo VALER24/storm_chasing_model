@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weather Models Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      background: #4f46e5;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      background: #4f46e5;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      background-color: white;
+      min-width: 250px;
+      box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+      z-index: 1;
+      border-radius: 0.375rem;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 0.5rem;
+    }
+    .dropdown:hover .dropdown-content {
+      display: block;
+    }
+    .param-btn {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 0.35rem 0.5rem;
+      margin: 0.1rem 0;
+      border-radius: 0.25rem;
+      font-size: 0.875rem;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+    .param-btn:hover {
+      background-color: #f3f4f6;
+    }
+    .param-category {
+      margin-bottom: 0.5rem;
+      padding: 0.5rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .param-category:last-child {
+      border-bottom: none;
+    }
+    .param-category h3 {
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 0.3rem;
+      padding-left: 0.25rem;
+    }
+    .model-tab {
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+    }
+    .model-tab.active {
+      border-bottom-color: #4f46e5;
+      font-weight: 600;
+      color: #4f46e5;
+    }
+        /* Navbar styles */
+    .navbar {
+      background-color: #1e40af;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+    .nav-links a {
+      color: white;
+      padding: 0.75rem 1rem;
+      transition: background-color 0.3s;
+    }
+    .nav-links a:hover {
+      background-color: #1e3a8a;
+    }
+    .nav-links a.active {
+      background-color: #1e3a8a;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body class="bg-gray-100">
+  <div class="container mx-auto p-4">
+    <h1 class="text-3xl font-bold mb-6 text-center">*BETA* K0NNK Team DominateX Weather Models Storm Chasing Dashboard *BETA*</h1>
+
+    <div class="flex flex-wrap gap-4 mb-6 justify-center items-end">
+      <!-- Parameter Dropdown -->
+      <div class="relative dropdown">
+        <button class="px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+          Select Parameter ▼
+        </button>
+        <div class="dropdown-content">
+          <!-- Model Tabs -->
+          <div class="flex border-b mb-2">
+            <div class="model-tab active" data-tab="hrrr">HRRR</div>
+            <div class="model-tab" data-tab="rap">RAP</div>
+            <div class="model-tab" data-tab="nam">NAM</div>
+          </div>
+          
+          <!-- HRRR Parameters -->
+          <div id="hrrrParams" class="model-params">
+            <div class="param-category">
+              <h3>Surface</h3>
+              <div id="hrrrSurfaceParams" class="grid grid-cols-1"></div>
+            </div>
+            <div class="param-category">
+              <h3>Upper Air</h3>
+              <div id="hrrrUpperAirParams" class="grid grid-cols-1"></div>
+            </div>
+            <div class="param-category">
+              <h3>Severe</h3>
+              <div id="hrrrSevereParams" class="grid grid-cols-1"></div>
+            </div>
+          </div>
+          
+          <!-- RAP Parameters -->
+          <div id="rapParams" class="model-params hidden">
+            <div class="param-category">
+              <h3>Surface</h3>
+              <div id="rapSurfaceParams" class="grid grid-cols-1"></div>
+            </div>
+            <div class="param-category">
+              <h3>Upper Air</h3>
+              <div id="rapUpperAirParams" class="grid grid-cols-1"></div>
+            </div>
+            <div class="param-category">
+              <h3>Upper Air Moisture</h3>
+              <div id="rapUpperAirMoistureParams" class="grid grid-cols-1"></div>
+            </div>
+            <div class="param-category">
+              <h3>Upper Air Dynamics</h3>
+              <div id="rapUpperAirDynamicsParams" class="grid grid-cols-1"></div>
+            </div>
+            <div class="param-category">
+              <h3>Severe</h3>
+              <div id="rapSevereParams" class="grid grid-cols-1"></div>
+            </div>
+          </div>
+          
+          <!-- NAM Parameters -->
+          <div id="namParams" class="model-params hidden">
+            <div class="param-category">
+              <h3>Surface</h3>
+              <div id="namSurfaceParams" class="grid grid-cols-1"></div>
+            </div>
+            <div class="param-category">
+              <h3>Upper Air</h3>
+              <div id="namUpperAirParams" class="grid grid-cols-1"></div>
+            </div>
+            <div class="param-category">
+              <h3>Upper Air Dynamics</h3>
+              <div id="namUpperAirDynamicsParams" class="grid grid-cols-1"></div>
+            </div>
+            <div class="param-category">
+              <h3>Severe</h3>
+              <div id="namSevereParams" class="grid grid-cols-1"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Forecast Hour Controls -->
+      <div class="bg-white p-3 rounded-md shadow">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Forecast Hour</label>
+        <div class="flex items-center gap-2">
+          <button id="prevBtn" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 focus:outline-none">&lt;</button>
+          <div class="flex-1">
+            <input type="range" id="fhSlider" min="1" max="36" value="1" step="1" class="w-full h-2 bg-gray-200 rounded-lg cursor-pointer">
+          </div>
+          <button id="nextBtn" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 focus:outline-none">&gt;</button>
+          <span id="fhLabel" class="w-10 text-center text-sm text-gray-700">1h</span>
+        </div>
+      </div>
+
+      <button id="refreshBtn" class="h-10 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+        Refresh Images
+      </button>
+    </div>
+
+    <nav class="navbar">
+        <div class="nav-container flex justify-between items-center py-3">
+          <div class="text-white font-bold text-xl">Other Links</div>
+          <div class="nav-links flex space-x-1">
+            <a href="https://web.weatherwise.app" target="_blank">Weatherwise</a>
+            <a href="https://home.pivotalweather.com/" target="_blank">Pivotal Weather</a>
+            <a href="https://www.tropicaltidbits.com/analysis/models/" target="_blank">Tropical Tidbits</a>
+            <a href="https://weather.cod.edu/" target="_blank">COD Meteorology</a>
+            <a href="https://www.spc.noaa.gov/products/" target="_blank">SPC outlooks</a>
+            <a href="http://data.nadocast.com/viewer.html" target="_blank">Nadocast</a>
+            <a href="https://github.com/valer24/storm_chasing_model" target="_blank">Github</a>
+          </div>
+        </div>
+      </nav>
+
+    <div id="error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"></div>
+
+    <div id="imageGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const fhSlider = document.getElementById('fhSlider');
+      const fhLabel = document.getElementById('fhLabel');
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const refreshBtn = document.getElementById('refreshBtn');
+      const errorDiv = document.getElementById('error');
+      const imageGrid = document.getElementById('imageGrid');
+      
+      // Parameter containers
+      const hrrrSurfaceParams = document.getElementById('hrrrSurfaceParams');
+      const hrrrUpperAirParams = document.getElementById('hrrrUpperAirParams');
+      const hrrrSevereParams = document.getElementById('hrrrSevereParams');
+      const rapSurfaceParams = document.getElementById('rapSurfaceParams');
+      const rapUpperAirParams = document.getElementById('rapUpperAirParams');
+      const rapUpperAirMoistureParams = document.getElementById('rapUpperAirMoistureParams');
+      const rapUpperAirDynamicsParams = document.getElementById('rapUpperAirDynamicsParams');
+      const rapSevereParams = document.getElementById('rapSevereParams');
+      const namSurfaceParams = document.getElementById('namSurfaceParams');
+      const namUpperAirParams = document.getElementById('namUpperAirParams');
+      const namUpperAirDynamicsParams = document.getElementById('namUpperAirDynamicsParams');
+      const namSevereParams = document.getElementById('namSevereParams');
+
+      // Model tabs
+      const modelTabs = document.querySelectorAll('.model-tab');
+      const modelParams = document.querySelectorAll('.model-params');
+
+      let currentParam = 'ref1km_ptype';
+
+      // Tab switching
+      modelTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          modelTabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          
+          const tabName = tab.dataset.tab;
+          modelParams.forEach(params => {
+            params.classList.add('hidden');
+            if (params.id === `${tabName}Params`) {
+              params.classList.remove('hidden');
+            }
+          });
+        });
+      });
+
+      const fetchImages = async (param, fh) => {
+        errorDiv.classList.add('hidden');
+        refreshBtn.disabled = true;
+        refreshBtn.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Loading...';
+
+        try {
+          const response = await fetch(`/images?param=${param}&fh=${fh}`);
+          const data = await response.json();
+
+          if (data.error) throw new Error(data.error);
+
+          // Populate parameter dropdowns if not already populated
+          if (hrrrSurfaceParams.children.length === 0) {
+            populateParamDropdowns(data.modelTypes);
+          }
+
+          // Render images
+          renderImages(data);
+        } catch (error) {
+          console.error('Error:', error);
+          errorDiv.textContent = `Error: ${error.message}`;
+          errorDiv.classList.remove('hidden');
+        } finally {
+          refreshBtn.disabled = false;
+          refreshBtn.textContent = 'Refresh Images';
+        }
+      };
+
+      const renderImages = (data) => {
+        imageGrid.innerHTML = '';
+        const displayNames = {
+          hrrr: 'HRRR',
+          rap: 'RAP',
+          nam4km: 'NAM 4km',
+          nadocast: 'Nadocast',
+          spc_outlook: 'SPC Outlook'
+        };
+
+        ['hrrr', 'rap', 'nam4km', 'nadocast', 'spc_outlook'].forEach(key => {
+          const div = document.createElement('div');
+          div.className = 'bg-white p-4 rounded-lg shadow h-full';
+          div.innerHTML = `
+            <h2 class="text-lg font-semibold mb-2">${displayNames[key]}</h2>
+            ${data[key] ? `<img src="${data[key]}" alt="${key} weather model" class="w-full h-auto rounded max-h-96 object-contain">` : '<p class="text-gray-500">Image not available</p>'}
+          `;
+          imageGrid.appendChild(div);
+        });
+      };
+
+      const populateParamDropdowns = (modelTypes) => {
+        // HRRR Surface
+        modelTypes.HRRR.surface.forEach(param => {
+          const btn = createParamButton(param);
+          hrrrSurfaceParams.appendChild(btn);
+        });
+
+        // HRRR Upper Air
+        modelTypes.HRRR.upper_air.forEach(param => {
+          const btn = createParamButton(param);
+          hrrrUpperAirParams.appendChild(btn);
+        });
+
+        // HRRR Severe
+        modelTypes.HRRR.severe.forEach(param => {
+          const btn = createParamButton(param);
+          hrrrSevereParams.appendChild(btn);
+        });
+
+        // RAP Surface
+        modelTypes.RAP.surface.forEach(param => {
+          const btn = createParamButton(param);
+          rapSurfaceParams.appendChild(btn);
+        });
+
+        // RAP Upper Air
+        modelTypes.RAP.upper_air.forEach(param => {
+          const btn = createParamButton(param);
+          rapUpperAirParams.appendChild(btn);
+        });
+
+        // RAP Upper Air Moisture
+        modelTypes.RAP.upper_air_moisture.forEach(param => {
+          const btn = createParamButton(param);
+          rapUpperAirMoistureParams.appendChild(btn);
+        });
+
+        // RAP Upper Air Dynamics
+        modelTypes.RAP.upper_air_dynamics.forEach(param => {
+          const btn = createParamButton(param);
+          rapUpperAirDynamicsParams.appendChild(btn);
+        });
+
+        // RAP Severe
+        modelTypes.RAP.severe.forEach(param => {
+          const btn = createParamButton(param);
+          rapSevereParams.appendChild(btn);
+        });
+
+        // NAM Surface
+        modelTypes.NAM_4km.surface.forEach(param => {
+          const btn = createParamButton(param);
+          namSurfaceParams.appendChild(btn);
+        });
+
+        // NAM Upper Air
+        modelTypes.NAM_4km.upper_air.forEach(param => {
+          const btn = createParamButton(param);
+          namUpperAirParams.appendChild(btn);
+        });
+
+        // NAM Upper Air Dynamics
+        modelTypes.NAM_4km.upper_air_dynamics.forEach(param => {
+          const btn = createParamButton(param);
+          namUpperAirDynamicsParams.appendChild(btn);
+        });
+
+        // NAM Severe
+        modelTypes.NAM_4km.severe.forEach(param => {
+          const btn = createParamButton(param);
+          namSevereParams.appendChild(btn);
+        });
+      };
+
+      const createParamButton = (param) => {
+        const btn = document.createElement('button');
+        btn.className = 'param-btn';
+        btn.textContent = param.replace(/_/g, ' ');
+        btn.onclick = () => {
+          currentParam = param;
+          fetchImages(param, fhSlider.value);
+        };
+        return btn;
+      };
+
+      // Event listeners
+      fhSlider.addEventListener('input', () => {
+        const fh = fhSlider.value;
+        fhLabel.textContent = `${fh}h`;
+        fetchImages(currentParam, fh);
+      });
+
+      prevBtn.addEventListener('click', () => {
+        const currentFh = parseInt(fhSlider.value);
+        if (currentFh > 1) {
+          fhSlider.value = currentFh - 1;
+          fhLabel.textContent = `${currentFh - 1}h`;
+          fetchImages(currentParam, currentFh - 1);
+        }
+      });
+
+      nextBtn.addEventListener('click', () => {
+        const currentFh = parseInt(fhSlider.value);
+        if (currentFh < 36) {
+          fhSlider.value = currentFh + 1;
+          fhLabel.textContent = `${currentFh + 1}h`;
+          fetchImages(currentParam, currentFh + 1);
+        }
+      });
+
+      refreshBtn.addEventListener('click', () => {
+        fetchImages(currentParam, fhSlider.value);
+      });
+
+      // Initial load
+      fetchImages(currentParam, 1);
+    });
+  </script>
+</body>
+</html>
