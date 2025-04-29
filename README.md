@@ -1,4 +1,4 @@
-# Storm Chasing Website - All-In-0ne storm chasing website
+# Storm Chasing Website - All-In-One storm chasing website
 
 I built this with different AI models and my little expeirence with node.js. I am getting started into chasing and would love to see this program grow. Feel free to submit a issue with a major request that would make this program alot better and I'll see if I want to add the change.
 
