@@ -1,4 +1,4 @@
-K0NNNK Non-Commercial License
+K0NNK Non-Commercial License
 
 Copyright (2025) [2025] [Collin Holdsworth]
 
