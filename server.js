@@ -171,7 +171,6 @@ const getCurrentUTCTime = () => {
   const day = String(now.getUTCDate()).padStart(2, '0');
   const hour = String(now.getUTCHours()).padStart(2, '0');
   
-  // For SPC soundings, use the closest 00 or 12 UTC cycle
   const utcHours = now.getUTCHours();
   const soundingHour = utcHours >= 12 ? '12' : '00';
   const soundingDate = utcHours < 12 && soundingHour === '00' ? 
@@ -210,6 +209,124 @@ const fetchAndCacheImage = async (url, cachePath, modelName) => {
     console.error(`Error fetching ${modelName} from ${url}:`, error.message);
     return null;
   }
+};
+
+const fetchHRRRImage = async (param, fh, baseTime) => {
+  const forecastHour = padForecastHour(fh);
+  const { pivotalHour } = getCurrentUTCTime();
+  
+  const url = `https://m2o.pivotalweather.com/maps/models/hrrr/${pivotalHour}/${forecastHour}/${param}.conus.png`;
+  const cachePath = path.join(cacheDir, `hrrr_${param}_${pivotalHour}_${forecastHour}.png`);
+  
+  return fetchAndCacheImage(url, cachePath, 'HRRR');
+};
+
+const fetchRAPImage = async (param, fh, baseTime) => {
+  const maxHourAttempts = 6;
+  const maxDayAttempts = 3;
+  const targetFh = parseInt(fh);
+  const targetValidTime = new Date(baseTime);
+  targetValidTime.setUTCHours(targetValidTime.getUTCHours() + targetFh);
+  
+  for (let dayAttempt = 0; dayAttempt < maxDayAttempts; dayAttempt++) {
+    const dayAttemptTime = new Date(baseTime);
+    dayAttemptTime.setUTCDate(dayAttemptTime.getUTCDate() - dayAttempt);
+    
+    for (let hourAttempt = 0; hourAttempt < maxHourAttempts; hourAttempt++) {
+      const attemptInitTime = new Date(dayAttemptTime);
+      attemptInitTime.setUTCHours(attemptInitTime.getUTCHours() - hourAttempt);
+      
+      const timeDiffHours = (targetValidTime - attemptInitTime) / (1000 * 60 * 60);
+      const neededFh = Math.floor(timeDiffHours);
+      
+      if (neededFh < 0 || neededFh > 60) continue;
+      
+      const year = attemptInitTime.getUTCFullYear();
+      const month = String(attemptInitTime.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(attemptInitTime.getUTCDate()).padStart(2, '0');
+      const hour = String(attemptInitTime.getUTCHours()).padStart(2, '0');
+      const pivotalHour = `${year}${month}${day}${hour}`;
+      const forecastHour = padForecastHour(neededFh);
+      const url = `https://m2o.pivotalweather.com/maps/models/rap/${pivotalHour}/${forecastHour}/${param}.conus.png`;
+      const cachePath = path.join(cacheDir, `rap_${param}_${pivotalHour}_${forecastHour}.png`);
+
+      try {
+        const cacheExists = await fsExtra.pathExists(cachePath);
+        if (cacheExists) {
+          console.log(`Using cached image for RAP (init ${pivotalHour}, fh ${forecastHour} for target fh ${fh}): ${cachePath}`);
+          return `/cache/${path.basename(cachePath)}`;
+        }
+
+        console.log(`Attempt ${dayAttempt * maxHourAttempts + hourAttempt + 1}/${maxHourAttempts * maxDayAttempts} - Fetching RAP init ${pivotalHour}, fh ${forecastHour} for target fh ${fh}: ${url}`);
+        const response = await axios.get(url, { responseType: 'arraybuffer', timeout: 10000 });
+        await fsExtra.writeFile(cachePath, response.data);
+        console.log(`Cached new image for RAP (init ${pivotalHour}, fh ${forecastHour} for target fh ${fh}): ${cachePath}`);
+        return `/cache/${path.basename(cachePath)}`;
+      } catch (error) {
+        console.error(`Attempt ${dayAttempt * maxHourAttempts + hourAttempt + 1}/${maxHourAttempts * maxDayAttempts} - Error fetching RAP from ${url}:`, error.message);
+        
+        if (dayAttempt === maxDayAttempts - 1 && hourAttempt === maxHourAttempts - 1) {
+          console.error(`Failed to fetch RAP after ${maxHourAttempts * maxDayAttempts} attempts`);
+          return null;
+        }
+      }
+    }
+  }
+  return null;
+};
+
+const fetchNAMImage = async (param, fh, baseTime) => {
+  const maxHourAttempts = 6;
+  const maxDayAttempts = 3;
+  const targetFh = parseInt(fh);
+  const targetValidTime = new Date(baseTime);
+  targetValidTime.setUTCHours(targetValidTime.getUTCHours() + targetFh);
+  
+  for (let dayAttempt = 0; dayAttempt < maxDayAttempts; dayAttempt++) {
+    const dayAttemptTime = new Date(baseTime);
+    dayAttemptTime.setUTCDate(dayAttemptTime.getUTCDate() - dayAttempt);
+    
+    for (let hourAttempt = 0; hourAttempt < maxHourAttempts; hourAttempt++) {
+      const attemptInitTime = new Date(dayAttemptTime);
+      attemptInitTime.setUTCHours(attemptInitTime.getUTCHours() - hourAttempt);
+      
+      const timeDiffHours = (targetValidTime - attemptInitTime) / (1000 * 60 * 60);
+      const neededFh = Math.floor(timeDiffHours);
+      
+      if (neededFh < 0 || neededFh > 60) continue;
+      
+      const year = attemptInitTime.getUTCFullYear();
+      const month = String(attemptInitTime.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(attemptInitTime.getUTCDate()).padStart(2, '0');
+      const hour = String(attemptInitTime.getUTCHours()).padStart(2, '0');
+      const pivotalHour = `${year}${month}${day}${hour}`;
+      const forecastHour = padForecastHour(neededFh);
+      const url = `https://m1o.pivotalweather.com/maps/models/nam4km/${pivotalHour}/${forecastHour}/${param}.conus.png`;
+      const cachePath = path.join(cacheDir, `nam4km_${param}_${pivotalHour}_${forecastHour}.png`);
+
+      try {
+        const cacheExists = await fsExtra.pathExists(cachePath);
+        if (cacheExists) {
+          console.log(`Using cached image for NAM (init ${pivotalHour}, fh ${forecastHour} for target fh ${fh}): ${cachePath}`);
+          return `/cache/${path.basename(cachePath)}`;
+        }
+
+        console.log(`Attempt ${dayAttempt * maxHourAttempts + hourAttempt + 1}/${maxHourAttempts * maxDayAttempts} - Fetching NAM init ${pivotalHour}, fh ${forecastHour} for target fh ${fh}: ${url}`);
+        const response = await axios.get(url, { responseType: 'arraybuffer', timeout: 10000 });
+        await fsExtra.writeFile(cachePath, response.data);
+        console.log(`Cached new image for NAM (init ${pivotalHour}, fh ${forecastHour} for target fh ${fh}): ${cachePath}`);
+        return `/cache/${path.basename(cachePath)}`;
+      } catch (error) {
+        console.error(`Attempt ${dayAttempt * maxHourAttempts + hourAttempt + 1}/${maxHourAttempts * maxDayAttempts} - Error fetching NAM from ${url}:`, error.message);
+        
+        if (dayAttempt === maxDayAttempts - 1 && hourAttempt === maxHourAttempts - 1) {
+          console.error(`Failed to fetch NAM after ${maxHourAttempts * maxDayAttempts} attempts`);
+          return null;
+        }
+      }
+    }
+  }
+  return null;
 };
 
 const fetchSoundingImage = async (station, fh, baseTime, soundingTime) => {
@@ -251,52 +368,44 @@ const fetchSoundingImage = async (station, fh, baseTime, soundingTime) => {
   return null;
 };
 
-const fetchModelWithFallback = async (param, targetFh, cacheDir, modelName, baseTime, modelPath) => {
-  const maxHourAttempts = 6;
+const fetchNadocastWithFallback = async (cacheDir, baseTime, yyyymm) => {
   const maxDayAttempts = 3;
-  
-  const targetValidTime = new Date(baseTime);
-  targetValidTime.setUTCHours(targetValidTime.getUTCHours() + parseInt(targetFh));
-  
+  const initHours = ['12z', '00z'];
+  const maxAttempts = maxDayAttempts * initHours.length;
+
   for (let dayAttempt = 0; dayAttempt < maxDayAttempts; dayAttempt++) {
-    const dayAttemptTime = new Date(baseTime);
-    dayAttemptTime.setUTCDate(dayAttemptTime.getUTCDate() - dayAttempt);
-    
-    for (let hourAttempt = 0; hourAttempt < maxHourAttempts; hourAttempt++) {
-      const attemptInitTime = new Date(dayAttemptTime);
-      attemptInitTime.setUTCHours(attemptInitTime.getUTCHours() - hourAttempt);
-      
-      const timeDiffHours = (targetValidTime - attemptInitTime) / (1000 * 60 * 60);
-      const neededFh = Math.floor(timeDiffHours);
-      
-      if (neededFh < 0 || neededFh > 60) continue;
-      
-      const year = attemptInitTime.getUTCFullYear();
-      const month = String(attemptInitTime.getUTCMonth() + 1).padStart(2, '0');
-      const day = String(attemptInitTime.getUTCDate()).padStart(2, '0');
-      const hour = String(attemptInitTime.getUTCHours()).padStart(2, '0');
-      const pivotalHour = `${year}${month}${day}${hour}`;
-      const forecastHour = padForecastHour(neededFh);
-      const url = `https://m1o.pivotalweather.com/maps/models/${modelPath}/${pivotalHour}/${forecastHour}/${param}.conus.png`;
-      const cachePath = path.join(cacheDir, `${modelPath}_${param}_${pivotalHour}_${forecastHour}.png`);
+    const attemptDate = new Date(baseTime);
+    attemptDate.setUTCDate(attemptDate.getUTCDate() - dayAttempt);
+
+    const year = attemptDate.getUTCFullYear();
+    const month = String(attemptDate.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(attemptDate.getUTCDate()).padStart(2, '0');
+    const attemptYyyyMm = `${year}${month}`;
+    const attemptYyyyMmDd = `${year}${month}${day}`;
+
+    for (let hourIndex = 0; hourIndex < initHours.length; hourIndex++) {
+      const nadocastHour = initHours[hourIndex];
+      const attemptNumber = dayAttempt * initHours.length + hourIndex + 1;
+
+      const url = `http://data.nadocast.com/${attemptYyyyMm}/${attemptYyyyMmDd}/t${nadocastHour}/nadocast_2022_models_conus_tornado_${attemptYyyyMmDd}_t${nadocastHour}_f02-23.png`;
+      const cachePath = path.join(cacheDir, `nadocast_${attemptYyyyMmDd}_${nadocastHour}.png`);
 
       try {
         const cacheExists = await fsExtra.pathExists(cachePath);
         if (cacheExists) {
-          console.log(`Using cached image for ${modelName} (init ${pivotalHour}, fh ${forecastHour} for target fh ${targetFh}): ${cachePath}`);
+          console.log(`Using cached Nadocast image for ${attemptYyyyMmDd} ${nadocastHour}: ${cachePath}`);
           return `/cache/${path.basename(cachePath)}`;
         }
 
-        console.log(`Attempt ${dayAttempt * maxHourAttempts + hourAttempt + 1}/${maxHourAttempts * maxDayAttempts} - Fetching ${modelName} init ${pivotalHour}, fh ${forecastHour} for target fh ${targetFh}: ${url}`);
+        console.log(`Attempt ${attemptNumber}/${maxAttempts} - Fetching Nadocast for ${attemptYyyyMmDd} ${nadocastHour}: ${url}`);
         const response = await axios.get(url, { responseType: 'arraybuffer', timeout: 10000 });
         await fsExtra.writeFile(cachePath, response.data);
-        console.log(`Cached new image for ${modelName} (init ${pivotalHour}, fh ${forecastHour} for target fh ${targetFh}): ${cachePath}`);
+        console.log(`Cached new Nadocast image for ${attemptYyyyMmDd} ${nadocastHour}: ${cachePath}`);
         return `/cache/${path.basename(cachePath)}`;
       } catch (error) {
-        console.error(`Attempt ${dayAttempt * maxHourAttempts + hourAttempt + 1}/${maxHourAttempts * maxDayAttempts} - Error fetching ${modelName} from ${url}:`, error.message);
-        
-        if (dayAttempt === maxDayAttempts - 1 && hourAttempt === maxHourAttempts - 1) {
-          console.error(`Failed to fetch ${modelName} after ${maxHourAttempts * maxDayAttempts} attempts`);
+        console.error(`Attempt ${attemptNumber}/${maxAttempts} - Error fetching Nadocast from ${url}:`, error.message);
+        if (dayAttempt === maxDayAttempts - 1 && hourIndex === initHours.length - 1) {
+          console.error(`Failed to fetch Nadocast after ${maxAttempts} attempts`);
           return null;
         }
       }
@@ -308,112 +417,44 @@ const fetchModelWithFallback = async (param, targetFh, cacheDir, modelName, base
 app.use('/cache', express.static(cacheDir));
 app.use(express.static(path.join(__dirname, 'public')));
 
-const fetchNadocastWithFallback = async (cacheDir, baseTime, yyyymm) => {
-    const maxDayAttempts = 3;
-    const initHours = ['12z', '00z'];
-    const maxAttempts = maxDayAttempts * initHours.length;
-  
-    for (let dayAttempt = 0; dayAttempt < maxDayAttempts; dayAttempt++) {
-      const attemptDate = new Date(baseTime);
-      attemptDate.setUTCDate(attemptDate.getUTCDate() - dayAttempt);
-  
-      const year = attemptDate.getUTCFullYear();
-      const month = String(attemptDate.getUTCMonth() + 1).padStart(2, '0');
-      const day = String(attemptDate.getUTCDate()).padStart(2, '0');
-      const attemptYyyyMm = `${year}${month}`;
-      const attemptYyyyMmDd = `${year}${month}${day}`;
-  
-      for (let hourIndex = 0; hourIndex < initHours.length; hourIndex++) {
-        const nadocastHour = initHours[hourIndex];
-        const attemptNumber = dayAttempt * initHours.length + hourIndex + 1;
-  
-        const url = `http://data.nadocast.com/${attemptYyyyMm}/${attemptYyyyMmDd}/t${nadocastHour}/nadocast_2022_models_conus_tornado_${attemptYyyyMmDd}_t${nadocastHour}_f02-23.png`;
-        const cachePath = path.join(cacheDir, `nadocast_${attemptYyyyMmDd}_${nadocastHour}.png`);
-  
-        try {
-          const cacheExists = await fsExtra.pathExists(cachePath);
-          if (cacheExists) {
-            console.log(`Using cached Nadocast image for ${attemptYyyyMmDd} ${nadocastHour}: ${cachePath}`);
-            return `/cache/${path.basename(cachePath)}`;
-          }
-  
-          console.log(`Attempt ${attemptNumber}/${maxAttempts} - Fetching Nadocast for ${attemptYyyyMmDd} ${nadocastHour}: ${url}`);
-          const response = await axios.get(url, { responseType: 'arraybuffer', timeout: 10000 });
-          await fsExtra.writeFile(cachePath, response.data);
-          console.log(`Cached new Nadocast image for ${attemptYyyyMmDd} ${nadocastHour}: ${cachePath}`);
-          return `/cache/${path.basename(cachePath)}`;
-        } catch (error) {
-          console.error(`Attempt ${attemptNumber}/${maxAttempts} - Error fetching Nadocast from ${url}:`, error.message);
-          if (dayAttempt === maxDayAttempts - 1 && hourIndex === initHours.length - 1) {
-            console.error(`Failed to fetch Nadocast after ${maxAttempts} attempts`);
-            return null;
-          }
-        }
-      }
-    }
-    return null;
-  };
+app.get('/images', async (req, res) => {
+  const { param = 'ref1km_ptype', fh = '1' } = req.query;
+  const forecastHour = padForecastHour(fh);
+  const { yyyymmdd, yyyymm, pivotalHour, nadocastHour, baseHour, soundingTime } = getCurrentUTCTime();
 
-  app.get('/images', async (req, res) => {
-    const { param = 'ref1km_ptype', fh = '1' } = req.query;
-    const forecastHour = padForecastHour(fh);
-    const { yyyymmdd, yyyymm, pivotalHour, nadocastHour, baseHour, soundingTime } = getCurrentUTCTime();
-  
-    try {
-      const imagePromises = [
-        fetchAndCacheImage(
-          `https://m2o.pivotalweather.com/maps/models/hrrr/${pivotalHour}/${forecastHour}/${param}.conus.png`,
-          path.join(cacheDir, `hrrr_${param}_${pivotalHour}_${forecastHour}.png`),
-          'HRRR'
-        ),
-        fetchModelWithFallback(
-          param,
-          fh,
-          cacheDir,
-          'RAP',
-          baseHour,
-          'rap'
-        ),
-        fetchModelWithFallback(
-          param,
-          fh,
-          cacheDir,
-          'NAM_4km',
-          baseHour,
-          'nam4km'
-        ),
-        fetchNadocastWithFallback(
-          cacheDir,
-          baseHour,
-          yyyymm
-        ),
-        fetchAndCacheImage(
-          `https://www.spc.noaa.gov/products/outlook/day1otlk_2000.gif`,
-          path.join(cacheDir, `spc_outlook.gif`),
-          'SPC_Outlook'
-        ),
-        fetchAndCacheImage(
-          `https://www.spc.noaa.gov/exper/soundings/${soundingTime}_OBS/sndgmap.gif`,
-          path.join(cacheDir, `noaa_soundings_base_${fh}.gif`),
-          'NOAA_Soundings'
-        )
-      ];
-  
-      const images = await Promise.all(imagePromises);
-      res.json({
-        hrrr: images[0],
-        rap: images[1],
-        nam4km: images[2],
-        nadocast: images[3],
-        spc_outlook: images[4],
-        noaa_soundings: { baseImage: images[5] },
-        modelTypes
-      });
-    } catch (error) {
-      console.error('Error fetching images:', error);
-      res.status(500).json({ error: 'Failed to fetch images' });
-    }
-  });
+  try {
+    const imagePromises = [
+      fetchHRRRImage(param, fh, baseHour),
+      fetchRAPImage(param, fh, baseHour),
+      fetchNAMImage(param, fh, baseHour),
+      fetchNadocastWithFallback(cacheDir, baseHour, yyyymm),
+      fetchAndCacheImage(
+        `https://www.spc.noaa.gov/products/outlook/day1otlk_2000.gif`,
+        path.join(cacheDir, `spc_outlook.gif`),
+        'SPC_Outlook'
+      ),
+      fetchAndCacheImage(
+        `https://www.spc.noaa.gov/exper/soundings/${soundingTime}_OBS/sndgmap.gif`,
+        path.join(cacheDir, `noaa_soundings_base_${fh}.gif`),
+        'NOAA_Soundings'
+      )
+    ];
+
+    const images = await Promise.all(imagePromises);
+    res.json({
+      hrrr: images[0],
+      rap: images[1],
+      nam4km: images[2],
+      nadocast: images[3],
+      spc_outlook: images[4],
+      noaa_soundings: { baseImage: images[5] },
+      modelTypes
+    });
+  } catch (error) {
+    console.error('Error fetching images:', error);
+    res.status(500).json({ error: 'Failed to fetch images' });
+  }
+});
 
 app.get('/sounding', async (req, res) => {
   const { station, fh = '1' } = req.query;
