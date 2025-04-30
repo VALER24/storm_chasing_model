@@ -98,11 +98,13 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      position: relative;
     }
     .nav-links a {
       color: white;
       padding: 0.75rem 1rem;
       transition: background-color 0.3s;
+      display: block;
     }
     .nav-links a:hover {
       background-color: #1e3a8a;
@@ -121,7 +123,7 @@
       height: auto;
       display: block;
       border-radius: 0.25rem;
-      max-height: 24rem; /* Match other images */
+      max-height: 24rem;
       object-fit: contain;
     }
     .sounding-btn {
@@ -150,6 +152,79 @@
     }
     .sounding-close-btn:hover {
       background-color: #dc2626;
+    }
+    .image-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .image-modal img {
+      max-width: 90%;
+      max-height: 90%;
+      object-fit: contain;
+      border-radius: 0.25rem;
+    }
+    .image-modal-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      padding: 10px 20px;
+      background-color: #ef4444;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+      z-index: 1010;
+    }
+    .image-modal-close:hover {
+      background-color: #dc2626;
+    }
+    /* Hamburger menu styles */
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      cursor: pointer;
+      padding: 0.75rem;
+    }
+    .hamburger span {
+      width: 25px;
+      height: 3px;
+      background-color: white;
+      margin: 2px 0;
+      transition: all 0.3s ease;
+    }
+    @media (max-width: 767px) {
+      .hamburger {
+        display: flex;
+      }
+      .nav-links {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        background-color: #1e40af;
+        flex-direction: column;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        z-index: 10;
+      }
+      .nav-links.active {
+        display: flex;
+      }
+      .nav-links a {
+        padding: 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .nav-links a:last-child {
+        border-bottom: none;
+      }
     }
   </style>
 </head>
@@ -246,9 +321,14 @@
     </div>
 
     <nav class="navbar">
-      <div class="nav-container py-3">
+      <div class="nav-container py-3 relative">
         <div class="text-white font-bold text-xl">Other Links</div>
-        <div class="nav-links flex space-x-1">
+        <div class="hamburger md:hidden" id="hamburger">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <div class="nav-links md:flex md:space-x-1" id="navLinks">
           <a href="https://web.weatherwise.app" target="_blank">Weatherwise</a>
           <a href="https://home.pivotalweather.com/" target="_blank">Pivotal Weather</a>
           <a href="https://www.tropicaltidbits.com/analysis/models/" target="_blank">Tropical Tidbits</a>
@@ -264,6 +344,11 @@
     <div id="error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"></div>
 
     <div id="imageGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6"></div>
+
+    <div id="imageModal" class="image-modal">
+      <img id="modalImage" src="" alt="Enlarged weather model image">
+      <button id="modalCloseBtn" class="image-modal-close">Close</button>
+    </div>
   </div>
 
   <script>
@@ -275,7 +360,12 @@
       const refreshBtn = document.getElementById('refreshBtn');
       const errorDiv = document.getElementById('error');
       const imageGrid = document.getElementById('imageGrid');
-      
+      const imageModal = document.getElementById('imageModal');
+      const modalImage = document.getElementById('modalImage');
+      const modalCloseBtn = document.getElementById('modalCloseBtn');
+      const hamburger = document.getElementById('hamburger');
+      const navLinks = document.getElementById('navLinks');
+
       const hrrrSurfaceParams = document.getElementById('hrrrSurfaceParams');
       const hrrrUpperAirParams = document.getElementById('hrrrUpperAirParams');
       const hrrrSevereParams = document.getElementById('hrrrSevereParams');
@@ -364,63 +454,80 @@
 
       let currentParam = 'ref1km_ptype';
 
-      // Native image dimensions
       const IMAGE_WIDTH = 279;
       const IMAGE_HEIGHT = 209;
 
-      // Sounding locations with adjusted percentage-based coordinates (x - 5, y + 8)
       const soundingLocations = [
-  { id: 'WPL', name: 'WPL', percentX: (155 / IMAGE_WIDTH) * 100, percentY: (19 / IMAGE_HEIGHT) * 100 },
-  { id: 'WMW', name: 'WMW', percentX: (225 / IMAGE_WIDTH) * 100, percentY: (41 / IMAGE_HEIGHT) * 100 },
-  { id: 'YQI', name: 'YQI', percentX: (270 / IMAGE_WIDTH) * 100, percentY: (44 / IMAGE_HEIGHT) * 100 },
-  { id: 'SGF', name: 'SGF', percentX: (152 / IMAGE_WIDTH) * 100, percentY: (109 / IMAGE_HEIGHT) * 100 },
-  { id: 'FWD', name: 'FWD', percentX: (133 / IMAGE_WIDTH) * 100, percentY: (137 / IMAGE_HEIGHT) * 100 },
-  { id: 'BRO', name: 'BRO', percentX: (132 / IMAGE_WIDTH) * 100, percentY: (181 / IMAGE_HEIGHT) * 100 },
-  { id: 'CRP', name: 'CRP', percentX: (133 / IMAGE_WIDTH) * 100, percentY: (168 / IMAGE_HEIGHT) * 100 },
-  { id: 'LCH', name: 'LCH', percentX: (155 / IMAGE_WIDTH) * 100, percentY: (154 / IMAGE_HEIGHT) * 100 },
-  { id: 'ABR', name: 'ABR', percentX: (126 / IMAGE_WIDTH) * 100, percentY: (58 / IMAGE_HEIGHT) * 100 },
-  { id: 'TFX', name: 'TFX', percentX: (72 / IMAGE_WIDTH) * 100, percentY: (41 / IMAGE_HEIGHT) * 100 },
-  { id: 'MPX', name: 'MPX', percentX: (149 / IMAGE_WIDTH) * 100, percentY: (60 / IMAGE_HEIGHT) * 100 },
-  { id: 'DVN', name: 'DVN', percentX: (163 / IMAGE_WIDTH) * 100, percentY: (80 / IMAGE_HEIGHT) * 100 },
-  { id: 'ILX', name: 'ILX', percentX: (171 / IMAGE_WIDTH) * 100, percentY: (88 / IMAGE_HEIGHT) * 100 },
-  { id: 'LIX', name: 'LIX', percentX: (173 / IMAGE_WIDTH) * 100, percentY: (151 / IMAGE_HEIGHT) * 100 },
-  { id: 'DDC', name: 'DDC', percentX: (120 / IMAGE_WIDTH) * 100, percentY: (106 / IMAGE_HEIGHT) * 100 },
-  { id: 'AMA', name: 'AMA', percentX: (111 / IMAGE_WIDTH) * 100, percentY: (122 / IMAGE_HEIGHT) * 100 },
-  { id: 'MAF', name: 'MAF', percentX: (108 / IMAGE_WIDTH) * 100, percentY: (143 / IMAGE_HEIGHT) * 100 },
-  { id: 'SHV', name: 'SHV', percentX: (152 / IMAGE_WIDTH) * 100, percentY: (139 / IMAGE_HEIGHT) * 100 },
-  { id: 'JAN', name: 'JAN', percentX: (171 / IMAGE_WIDTH) * 100, percentY: (139 / IMAGE_HEIGHT) * 100 },
-  { id: 'BMX', name: 'BMX', percentX: (188 / IMAGE_WIDTH) * 100, percentY: (131 / IMAGE_HEIGHT) * 100 },
-  { id: 'BNA', name: 'BNA', percentX: (186 / IMAGE_WIDTH) * 100, percentY: (112 / IMAGE_HEIGHT) * 100 },
-  { id: 'DTX', name: 'DTX', percentX: (197 / IMAGE_WIDTH) * 100, percentY: (71 / IMAGE_HEIGHT) * 100 },
-  { id: 'GRB', name: 'GRB', percentX: (173 / IMAGE_WIDTH) * 100, percentY: (60 / IMAGE_HEIGHT) * 100 },
-  { id: 'GSO', name: 'GSO', percentX: (220 / IMAGE_WIDTH) * 100, percentY: (109 / IMAGE_HEIGHT) * 100 },
-  { id: 'IAD', name: 'IAD', percentX: (228 / IMAGE_WIDTH) * 100, percentY: (87 / IMAGE_HEIGHT) * 100 },
-  { id: 'INL', name: 'INL', percentX: (148 / IMAGE_WIDTH) * 100, percentY: (37 / IMAGE_HEIGHT) * 100 },
-  { id: 'KEY', name: 'KEY', percentX: (224 / IMAGE_WIDTH) * 100, percentY: (181 / IMAGE_HEIGHT) * 100 },
-  { id: 'JAX', name: 'JAX', percentX: (217 / IMAGE_WIDTH) * 100, percentY: (144 / IMAGE_HEIGHT) * 100 },
-  { id: 'CHS', name: 'CHS', percentX: (223 / IMAGE_WIDTH) * 100, percentY: (127 / IMAGE_HEIGHT) * 100 },
-  { id: 'MHX', name: 'MHX', percentX: (236 / IMAGE_WIDTH) * 100, percentY: (112 / IMAGE_HEIGHT) * 100 },
-  { id: 'PIT', name: 'PIT', percentX: (213 / IMAGE_WIDTH) * 100, percentY: (81 / IMAGE_HEIGHT) * 100 },
-  { id: 'BUF', name: 'BUF', percentX: (217 / IMAGE_WIDTH) * 100, percentY: (65 / IMAGE_HEIGHT) * 100 },
-  { id: 'WAL', name: 'WAL', percentX: (239 / IMAGE_WIDTH) * 100, percentY: (91 / IMAGE_HEIGHT) * 100 },
-  { id: 'ALB', name: 'ALB', percentX: (239 / IMAGE_WIDTH) * 100, percentY: (60 / IMAGE_HEIGHT) * 100 },
-  { id: 'FGZ', name: 'FGZ', percentX: (60 / IMAGE_WIDTH) * 100, percentY: (117 / IMAGE_HEIGHT) * 100 },
-  { id: 'NKX', name: 'NKX', percentX: (30 / IMAGE_WIDTH) * 100, percentY: (127 / IMAGE_HEIGHT) * 100 },
-  { id: 'REV', name: 'REV', percentX: (25 / IMAGE_WIDTH) * 100, percentY: (82 / IMAGE_HEIGHT) * 100 },
-  { id: 'MFR', name: 'MFR', percentX: (16 / IMAGE_WIDTH) * 100, percentY: (63 / IMAGE_HEIGHT) * 100 },
-  { id: 'SLE', name: 'SLE', percentX: (20 / IMAGE_WIDTH) * 100, percentY: (46 / IMAGE_HEIGHT) * 100 },
-  { id: 'UIL', name: 'UIL', percentX: (18 / IMAGE_WIDTH) * 100, percentY: (29 / IMAGE_HEIGHT) * 100 },
-  { id: 'TOP', name: 'TOP', percentX: (140 / IMAGE_WIDTH) * 100, percentY: (98 / IMAGE_HEIGHT) * 100 },
-  { id: 'ABQ', name: 'ABQ', percentX: (85 / IMAGE_WIDTH) * 100, percentY: (121 / IMAGE_HEIGHT) * 100 },
-  { id: 'SLC', name: 'SLC', percentX: (64 / IMAGE_WIDTH) * 100, percentY: (82 / IMAGE_HEIGHT) * 100 },
-  { id: 'BOI', name: 'BOI', percentX: (47 / IMAGE_WIDTH) * 100, percentY: (61 / IMAGE_HEIGHT) * 100 },
-  { id: 'LKN', name: 'LKN', percentX: (47 / IMAGE_WIDTH) * 100, percentY: (79 / IMAGE_HEIGHT) * 100 },
-  { id: 'RIW', name: 'RIW', percentX: (81 / IMAGE_WIDTH) * 100, percentY: (70 / IMAGE_HEIGHT) * 100 },
-  { id: 'GJT', name: 'GJT', percentX: (79 / IMAGE_WIDTH) * 100, percentY: (95 / IMAGE_HEIGHT) * 100 },
-  { id: 'DRT', name: 'DRT', percentX: (114 / IMAGE_WIDTH) * 100, percentY: (159 / IMAGE_HEIGHT) * 100 },
-  { id: 'VEF', name: 'VEF', percentX: (44 / IMAGE_WIDTH) * 100, percentY: (109 / IMAGE_HEIGHT) * 100 },
-  { id: 'OUN', name: 'OUN', percentX: (132 / IMAGE_WIDTH) * 100, percentY: (122 / IMAGE_HEIGHT) * 100 }
-];
+        { id: 'WPL', name: 'WPL', percentX: (155 / IMAGE_WIDTH) * 100, percentY: (19 / IMAGE_HEIGHT) * 100 },
+        { id: 'WMW', name: 'WMW', percentX: (225 / IMAGE_WIDTH) * 100, percentY: (41 / IMAGE_HEIGHT) * 100 },
+        { id: 'YQI', name: 'YQI', percentX: (270 / IMAGE_WIDTH) * 100, percentY: (44 / IMAGE_HEIGHT) * 100 },
+        { id: 'SGF', name: 'SGF', percentX: (152 / IMAGE_WIDTH) * 100, percentY: (109 / IMAGE_HEIGHT) * 100 },
+        { id: 'FWD', name: 'FWD', percentX: (133 / IMAGE_WIDTH) * 100, percentY: (137 / IMAGE_HEIGHT) * 100 },
+        { id: 'BRO', name: 'BRO', percentX: (132 / IMAGE_WIDTH) * 100, percentY: (181 / IMAGE_HEIGHT) * 100 },
+        { id: 'CRP', name: 'CRP', percentX: (133 / IMAGE_WIDTH) * 100, percentY: (168 / IMAGE_HEIGHT) * 100 },
+        { id: 'LCH', name: 'LCH', percentX: (155 / IMAGE_WIDTH) * 100, percentY: (154 / IMAGE_HEIGHT) * 100 },
+        { id: 'ABR', name: 'ABR', percentX: (126 / IMAGE_WIDTH) * 100, percentY: (58 / IMAGE_HEIGHT) * 100 },
+        { id: 'TFX', name: 'TFX', percentX: (72 / IMAGE_WIDTH) * 100, percentY: (41 / IMAGE_HEIGHT) * 100 },
+        { id: 'MPX', name: 'MPX', percentX: (149 / IMAGE_WIDTH) * 100, percentY: (60 / IMAGE_HEIGHT) * 100 },
+        { id: 'DVN', name: 'DVN', percentX: (163 / IMAGE_WIDTH) * 100, percentY: (80 / IMAGE_HEIGHT) * 100 },
+        { id: 'ILX', name: 'ILX', percentX: (171 / IMAGE_WIDTH) * 100, percentY: (88 / IMAGE_HEIGHT) * 100 },
+        { id: 'LIX', name: 'LIX', percentX: (173 / IMAGE_WIDTH) * 100, percentY: (151 / IMAGE_HEIGHT) * 100 },
+        { id: 'DDC', name: 'DDC', percentX: (120 / IMAGE_WIDTH) * 100, percentY: (106 / IMAGE_HEIGHT) * 100 },
+        { id: 'AMA', name: 'AMA', percentX: (111 / IMAGE_WIDTH) * 100, percentY: (122 / IMAGE_HEIGHT) * 100 },
+        { id: 'MAF', name: 'MAF', percentX: (108 / IMAGE_WIDTH) * 100, percentY: (143 / IMAGE_HEIGHT) * 100 },
+        { id: 'SHV', name: 'SHV', percentX: (152 / IMAGE_WIDTH) * 100, percentY: (139 / IMAGE_HEIGHT) * 100 },
+        { id: 'JAN', name: 'JAN', percentX: (171 / IMAGE_WIDTH) * 100, percentY: (139 / IMAGE_HEIGHT) * 100 },
+        { id: 'BMX', name: 'BMX', percentX: (188 / IMAGE_WIDTH) * 100, percentY: (131 / IMAGE_HEIGHT) * 100 },
+        { id: 'BNA', name: 'BNA', percentX: (186 / IMAGE_WIDTH) * 100, percentY: (112 / IMAGE_HEIGHT) * 100 },
+        { id: 'DTX', name: 'DTX', percentX: (197 / IMAGE_WIDTH) * 100, percentY: (71 / IMAGE_HEIGHT) * 100 },
+        { id: 'GRB', name: 'GRB', percentX: (173 / IMAGE_WIDTH) * 100, percentY: (60 / IMAGE_HEIGHT) * 100 },
+        { id: 'GSO', name: 'GSO', percentX: (220 / IMAGE_WIDTH) * 100, percentY: (109 / IMAGE_HEIGHT) * 100 },
+        { id: 'IAD', name: 'IAD', percentX: (228 / IMAGE_WIDTH) * 100, percentY: (87 / IMAGE_HEIGHT) * 100 },
+        { id: 'INL', name: 'INL', percentX: (148 / IMAGE_WIDTH) * 100, percentY: (37 / IMAGE_HEIGHT) * 100 },
+        { id: 'KEY', name: 'KEY', percentX: (224 / IMAGE_WIDTH) * 100, percentY: (181 / IMAGE_HEIGHT) * 100 },
+        { id: 'JAX', name: 'JAX', percentX: (217 / IMAGE_WIDTH) * 100, percentY: (144 / IMAGE_HEIGHT) * 100 },
+        { id: 'CHS', name: 'CHS', percentX: (223 / IMAGE_WIDTH) * 100, percentY: (127 / IMAGE_HEIGHT) * 100 },
+        { id: 'MHX', name: 'MHX', percentX: (236 / IMAGE_WIDTH) * 100, percentY: (112 / IMAGE_HEIGHT) * 100 },
+        { id: 'PIT', name: 'PIT', percentX: (213 / IMAGE_WIDTH) * 100, percentY: (81 / IMAGE_HEIGHT) * 100 },
+        { id: 'BUF', name: 'BUF', percentX: (217 / IMAGE_WIDTH) * 100, percentY: (65 / IMAGE_HEIGHT) * 100 },
+        { id: 'WAL', name: 'WAL', percentX: (239 / IMAGE_WIDTH) * 100, percentY: (91 / IMAGE_HEIGHT) * 100 },
+        { id: 'ALB', name: 'ALB', percentX: (239 / IMAGE_WIDTH) * 100, percentY: (60 / IMAGE_HEIGHT) * 100 },
+        { id: 'FGZ', name: 'FGZ', percentX: (60 / IMAGE_WIDTH) * 100, percentY: (117 / IMAGE_HEIGHT) * 100 },
+        { id: 'NKX', name: 'NKX', percentX: (30 / IMAGE_WIDTH) * 100, percentY: (127 / IMAGE_HEIGHT) * 100 },
+        { id: 'REV', name: 'REV', percentX: (25 / IMAGE_WIDTH) * 100, percentY: (82 / IMAGE_HEIGHT) * 100 },
+        { id: 'MFR', name: 'MFR', percentX: (16 / IMAGE_WIDTH) * 100, percentY: (63 / IMAGE_HEIGHT) * 100 },
+        { id: 'SLE', name: 'SLE', percentX: (20 / IMAGE_WIDTH) * 100, percentY: (46 / IMAGE_HEIGHT) * 100 },
+        { id: 'UIL', name: 'UIL', percentX: (18 / IMAGE_WIDTH) * 100, percentY: (29 / IMAGE_HEIGHT) * 100 },
+        { id: 'TOP', name: 'TOP', percentX: (140 / IMAGE_WIDTH) * 100, percentY: (98 / IMAGE_HEIGHT) * 100 },
+        { id: 'ABQ', name: 'ABQ', percentX: (85 / IMAGE_WIDTH) * 100, percentY: (121 / IMAGE_HEIGHT) * 100 },
+        { id: 'SLC', name: 'SLC', percentX: (64 / IMAGE_WIDTH) * 100, percentY: (82 / IMAGE_HEIGHT) * 100 },
+        { id: 'BOI', name: 'BOI', percentX: (47 / IMAGE_WIDTH) * 100, percentY: (61 / IMAGE_HEIGHT) * 100 },
+        { id: 'LKN', name: 'LKN', percentX: (47 / IMAGE_WIDTH) * 100, percentY: (79 / IMAGE_HEIGHT) * 100 },
+        { id: 'RIW', name: 'RIW', percentX: (81 / IMAGE_WIDTH) * 100, percentY: (70 / IMAGE_HEIGHT) * 100 },
+        { id: 'GJT', name: 'GJT', percentX: (79 / IMAGE_WIDTH) * 100, percentY: (95 / IMAGE_HEIGHT) * 100 },
+        { id: 'DRT', name: 'DRT', percentX: (114 / IMAGE_WIDTH) * 100, percentY: (159 / IMAGE_HEIGHT) * 100 },
+        { id: 'VEF', name: 'VEF', percentX: (44 / IMAGE_WIDTH) * 100, percentY: (109 / IMAGE_HEIGHT) * 100 },
+        { id: 'OUN', name: 'OUN', percentX: (132 / IMAGE_WIDTH) * 100, percentY: (122 / IMAGE_HEIGHT) * 100 }
+      ];
+
+      // Hamburger menu toggle
+      hamburger.addEventListener('click', () => {
+        navLinks.classList.toggle('active');
+      });
+
+      // Close menu when clicking a link
+      navLinks.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+          navLinks.classList.remove('active');
+        });
+      });
+
+      // Close menu when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!navLinks.contains(e.target) && !hamburger.contains(e.target)) {
+          navLinks.classList.remove('active');
+        }
+      });
 
       modelTabs.forEach(tab => {
         tab.addEventListener('click', () => {
@@ -435,6 +542,26 @@
             }
           });
         });
+      });
+
+      const showImageModal = (src, alt) => {
+        modalImage.src = src;
+        modalImage.alt = alt;
+        imageModal.style.display = 'flex';
+      };
+
+      const closeImageModal = () => {
+        imageModal.style.display = 'none';
+        modalImage.src = '';
+        modalImage.alt = '';
+      };
+
+      modalCloseBtn.addEventListener('click', closeImageModal);
+
+      imageModal.addEventListener('click', (e) => {
+        if (e.target === imageModal) {
+          closeImageModal();
+        }
       });
 
       const fetchImages = async (param, fh) => {
@@ -506,8 +633,14 @@
           } else {
             div.innerHTML = `
               <h2 class="text-lg font-semibold mb-2">${displayNames[key]}</h2>
-              ${data[key] ? `<img src="${data[key]}" alt="${key} weather model" class="w-full h-auto rounded max-h-96 object-contain">` : '<p class="text-gray-500">Image not available</p>'}
+              ${data[key] ? `<img src="${data[key]}" alt="${key} weather model" class="w-full h-auto rounded max-h-96 object-contain cursor-pointer">` : '<p class="text-gray-500">Image not available</p>'}
             `;
+            if (data[key]) {
+              const img = div.querySelector('img');
+              img.addEventListener('click', () => {
+                showImageModal(img.src, img.alt);
+              });
+            }
           }
           
           imageGrid.appendChild(div);
