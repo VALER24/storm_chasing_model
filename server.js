@@ -429,7 +429,7 @@ app.get('/images', async (req, res) => {
       fetchNAMImage(param, fh, baseHour),
       fetchNadocastWithFallback(cacheDir, baseHour, yyyymm),
       fetchAndCacheImage(
-        `https://www.spc.noaa.gov/products/outlook/day1otlk_2000.gif`,
+        `https://www.spc.noaa.gov/products/outlook/day1otlk.gif`,
         path.join(cacheDir, `spc_outlook.gif`),
         'SPC_Outlook'
       ),
