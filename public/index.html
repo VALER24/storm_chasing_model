@@ -38,19 +38,28 @@
       display: block;
     }
     .param-btn {
-      display: block;
+      display: flex;
+      align-items: center;
       width: 100%;
       text-align: left;
-      padding: 0.35rem 0.5rem;
+      padding: 0.5rem 1rem;
       margin: 0.1rem 0;
       border-radius: 0.25rem;
       font-size: 0.875rem;
       background: none;
       border: none;
       cursor: pointer;
+      transition: all 0.2s;
     }
     .param-btn:hover {
-      background-color: #f3f4f6;
+      background-color: #e0e7ff;
+      color: #1e40af;
+    }
+    .param-btn:before {
+      content: "•";
+      color: #3b82f6;
+      margin-right: 0.5rem;
+      font-weight: bold;
     }
     .param-category {
       margin-bottom: 0.5rem;
@@ -62,9 +71,11 @@
     }
     .param-category h3 {
       font-weight: 600;
-      color: #111827;
-      margin-bottom: 0.3rem;
-      padding-left: 0.25rem;
+      color: #1e40af;
+      padding: 0.5rem 1rem;
+      background-color: #f8fafc;
+      border-radius: 0.25rem;
+      margin-bottom: 0.5rem;
     }
     .model-tab {
       padding: 0.5rem 1rem;
@@ -76,7 +87,7 @@
       font-weight: 600;
       color: #4f46e5;
     }
-        /* Navbar styles */
+    /* Navbar styles */
     .navbar {
       background-color: #1e40af;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -199,19 +210,20 @@
     </div>
 
     <nav class="navbar">
-        <div class="nav-container flex justify-between items-center py-3">
-          <div class="text-white font-bold text-xl">Other Links</div>
-          <div class="nav-links flex space-x-1">
-            <a href="https://web.weatherwise.app" target="_blank">Weatherwise</a>
-            <a href="https://home.pivotalweather.com/" target="_blank">Pivotal Weather</a>
-            <a href="https://www.tropicaltidbits.com/analysis/models/" target="_blank">Tropical Tidbits</a>
-            <a href="https://weather.cod.edu/" target="_blank">COD Meteorology</a>
-            <a href="https://www.spc.noaa.gov/products/" target="_blank">SPC outlooks</a>
-            <a href="http://data.nadocast.com/viewer.html" target="_blank">Nadocast</a>
-            <a href="https://github.com/valer24/storm_chasing_model" target="_blank">Github</a>
-          </div>
+      <div class="nav-container flex justify-between items-center py-3">
+        <div class="text-white font-bold text-xl">Other Links</div>
+        <div class="nav-links flex space-x-1">
+          <a href="https://web.weatherwise.app" target="_blank">Weatherwise</a>
+          <a href="https://home.pivotalweather.com/" target="_blank">Pivotal Weather</a>
+          <a href="https://www.tropicaltidbits.com/analysis/models/" target="_blank">Tropical Tidbits</a>
+          <a href="https://weather.cod.edu/" target="_blank">COD Meteorology</a>
+          <a href="https://www.spc.noaa.gov/products/" target="_blank">SPC outlooks</a>
+          <a href="http://data.nadocast.com/viewer.html" target="_blank">Nadocast</a>
+          <a href="https://github.com/valer24/storm_chasing_model" target="_blank">Github</a>
+          <a href="mailto:collin@mesocapped.com">Contact</a>
         </div>
-      </nav>
+      </div>
+    </nav>
 
     <div id="error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"></div>
 
@@ -241,6 +253,82 @@
       const namUpperAirParams = document.getElementById('namUpperAirParams');
       const namUpperAirDynamicsParams = document.getElementById('namUpperAirDynamicsParams');
       const namSevereParams = document.getElementById('namSevereParams');
+
+      // Custom display names for parameters
+      const paramDisplayNames = {
+        // HRRR
+        'ref1km_ptype': '1km AGL Reflectivity Precip',
+        '2m_temperature': '2m Temperature',
+        'precipitation_rate': 'Precipitation Rate',
+        'cloud_cover': 'Cloud Cover',
+        'sfcrh': '2m Relative Humidity',
+        'sfct-imp': '2m Temperature',
+        'sfctd-imp': '2m Dew Point',
+        'sfcthetae_b': '2m Theta-E Wind Barbs',
+        'sfcwind_mslp': 'MSLP + 10m Winds',
+        'smoke_viden': 'Vertically Integrated Smoke',
+        'qpf_001h-imp': '1hr QPF',
+        'qpf_006h-imp': '6hr QPF',
+        'qpf_012h-imp': '12hr QPF',
+        'qpf_acc-imp': 'Total QPF',
+        'cloudcover': 'Cloud Cover',
+        'cloudcover_levels': 'Cloud Cover Levels',
+        'lgtden': 'Lightning Density',
+        'sim_ir': 'Simulated IR Satellite',
+        'ref1km': '1km Reflectivity',
+        'refcmp': 'Composite Reflectivity',
+        '500wh': '500mb Height/Wind',
+        '700wh': '700mb Height/Wind',
+        '850wh': '850mb Height/Wind',
+        '700th': '700mb Temp/Height/Wind',
+        '850th': '850mb Temp/Height/Wind',
+        '700tadv': '700mb Temp Advection',
+        '850tadv': '850mb Temp Advection',
+        'cape03': '0-3km CAPE',
+        'mlcape': 'Mixed Layer CAPE',
+        'sbcin': 'Surface Based CIN',
+        'mlcin': 'Mixed Layer CIN',
+        'sblcl': 'Surface Based LCL Height',
+        'lr75': '700-500mb Lapse Rate',
+        'bs01': '0-1km Bulk Shear',
+        'bs06': '0-6km Bulk Shear',
+        'srh01': '0-1km Storm Helicity',
+        'srh03': '0-3km Storm Helicity',
+        'ehi01': '0-1km Energy Helicity',
+        'ehi03': '0-3km Energy Helicity',
+        'scp': 'Supercell Composite',
+        'stp': 'Sig Tornado Parameter',
+        
+        // RAP
+        'wind_gusts': 'Wind Gusts',
+        'pwat': 'Precipitable Water',
+        '200wh': '200mb Height/Wind',
+        '300wh': '300mb Height/Wind',
+        '925wh': '925mb Height/Wind',
+        '500h_change_012h': '500mb Height Change (12hr)',
+        '500th': '500mb Temp/Height/Wind',
+        '925th': '925mb Temp/Height/Wind',
+        '200rh': '200mb RH/Wind',
+        '500rh': '500mb RH/Wind',
+        '850rh': '850mb RH/Wind',
+        '850td': '850mb Dewpoint/Height/Wind',
+        '925td': '925mb Dewpoint/Height/Wind',
+        '500hv': '500mb Height Vorticity',
+        '500hvv': '500mb Height/Vert Velocity',
+        '700hvv': '700mb Height/Vert Velocity',
+        '850hvv': '850mb Height/Vert Velocity',
+        'mucape': 'Most Unstable CAPE',
+        'sbcape': 'Surface Based CAPE',
+        'sbli': 'Surface Lifted Index',
+        
+        // NAM
+        'qpf_003h-imp': '3hr QPF',
+        'qpf_024h-imp': '24hr QPF',
+        'uh03_max': 'Updraft Helicity 0-3km',
+        'uh25_003h': 'Updraft Helicity 2-5km',
+        'crossover': 'SB CAPE Crossover',
+        'sbcape_hodo': 'SB CAPE Hodograph'
+      };
 
       // Model tabs
       const modelTabs = document.querySelectorAll('.model-tab');
@@ -297,7 +385,7 @@
         const displayNames = {
           hrrr: 'HRRR',
           rap: 'RAP',
-          nam4km: 'NAM 4km',
+          nam4km: 'NAM 3km',
           nadocast: 'Nadocast',
           spc_outlook: 'SPC Outlook'
         };
@@ -390,9 +478,17 @@
       const createParamButton = (param) => {
         const btn = document.createElement('button');
         btn.className = 'param-btn';
-        btn.textContent = param.replace(/_/g, ' ');
+        
+        // Use the display name if available, otherwise format the parameter name
+        btn.textContent = paramDisplayNames[param] || 
+          param.replace(/_/g, ' ')
+               .replace(/-imp/g, '')
+               .replace(/^2m /, '2m ')
+               .replace(/([a-z])([A-Z])/g, '$1 $2') // Add space before capital letters
+               .replace(/\b(\w)/g, s => s.toUpperCase()); // Capitalize first letters
+        
         btn.onclick = () => {
-          currentParam = param;
+          currentParam = param; // Still use the original parameter for backend
           fetchImages(param, fhSlider.value);
         };
         return btn;
@@ -431,5 +527,7 @@
       fetchImages(currentParam, 1);
     });
   </script>
+</body>
+</html>
 </body>
 </html>
