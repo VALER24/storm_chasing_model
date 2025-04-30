@@ -87,7 +87,6 @@
       font-weight: 600;
       color: #4f46e5;
     }
-    /* Navbar styles */
     .navbar {
       background-color: #1e40af;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -96,6 +95,9 @@
       max-width: 1200px;
       margin: 0 auto;
       padding: 0 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     .nav-links a {
       color: white;
@@ -109,6 +111,46 @@
       background-color: #1e3a8a;
       font-weight: 500;
     }
+    .sounding-container {
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+    }
+    .sounding-container img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 0.25rem;
+      max-height: 24rem; /* Match other images */
+      object-fit: contain;
+    }
+    .sounding-btn {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background-color: rgba(255, 0, 0, 0.7);
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid white;
+      z-index: 10;
+    }
+    .sounding-btn:hover {
+      background-color: rgba(255, 0, 0, 1);
+    }
+    .sounding-close-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 5px 10px;
+      background-color: #ef4444;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      z-index: 20;
+    }
+    .sounding-close-btn:hover {
+      background-color: #dc2626;
+    }
   </style>
 </head>
 <body class="bg-gray-100">
@@ -116,20 +158,17 @@
     <h1 class="text-3xl font-bold mb-6 text-center">*BETA* K0NNK Team DominateX Weather Models Storm Chasing Dashboard *BETA*</h1>
 
     <div class="flex flex-wrap gap-4 mb-6 justify-center items-end">
-      <!-- Parameter Dropdown -->
       <div class="relative dropdown">
         <button class="px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
           Select Parameter ▼
         </button>
         <div class="dropdown-content">
-          <!-- Model Tabs -->
           <div class="flex border-b mb-2">
             <div class="model-tab active" data-tab="hrrr">HRRR</div>
             <div class="model-tab" data-tab="rap">RAP</div>
             <div class="model-tab" data-tab="nam">NAM</div>
           </div>
           
-          <!-- HRRR Parameters -->
           <div id="hrrrParams" class="model-params">
             <div class="param-category">
               <h3>Surface</h3>
@@ -145,7 +184,6 @@
             </div>
           </div>
           
-          <!-- RAP Parameters -->
           <div id="rapParams" class="model-params hidden">
             <div class="param-category">
               <h3>Surface</h3>
@@ -169,7 +207,6 @@
             </div>
           </div>
           
-          <!-- NAM Parameters -->
           <div id="namParams" class="model-params hidden">
             <div class="param-category">
               <h3>Surface</h3>
@@ -191,15 +228,14 @@
         </div>
       </div>
 
-      <!-- Forecast Hour Controls -->
       <div class="bg-white p-3 rounded-md shadow">
         <label class="block text-sm font-medium text-gray-700 mb-1">Forecast Hour</label>
         <div class="flex items-center gap-2">
-          <button id="prevBtn" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 focus:outline-none">&lt;</button>
+          <button id="prevBtn" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 focus:outline-none"><</button>
           <div class="flex-1">
             <input type="range" id="fhSlider" min="1" max="36" value="1" step="1" class="w-full h-2 bg-gray-200 rounded-lg cursor-pointer">
           </div>
-          <button id="nextBtn" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 focus:outline-none">&gt;</button>
+          <button id="nextBtn" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 focus:outline-none">></button>
           <span id="fhLabel" class="w-10 text-center text-sm text-gray-700">1h</span>
         </div>
       </div>
@@ -210,7 +246,7 @@
     </div>
 
     <nav class="navbar">
-      <div class="nav-container flex justify-between items-center py-3">
+      <div class="nav-container py-3">
         <div class="text-white font-bold text-xl">Other Links</div>
         <div class="nav-links flex space-x-1">
           <a href="https://web.weatherwise.app" target="_blank">Weatherwise</a>
@@ -227,7 +263,7 @@
 
     <div id="error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"></div>
 
-    <div id="imageGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    <div id="imageGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6"></div>
   </div>
 
   <script>
@@ -240,7 +276,6 @@
       const errorDiv = document.getElementById('error');
       const imageGrid = document.getElementById('imageGrid');
       
-      // Parameter containers
       const hrrrSurfaceParams = document.getElementById('hrrrSurfaceParams');
       const hrrrUpperAirParams = document.getElementById('hrrrUpperAirParams');
       const hrrrSevereParams = document.getElementById('hrrrSevereParams');
@@ -254,9 +289,7 @@
       const namUpperAirDynamicsParams = document.getElementById('namUpperAirDynamicsParams');
       const namSevereParams = document.getElementById('namSevereParams');
 
-      // Custom display names for parameters
       const paramDisplayNames = {
-        // HRRR
         'ref1km_ptype': '1km AGL Reflectivity Precip',
         '2m_temperature': '2m Temperature',
         'precipitation_rate': 'Precipitation Rate',
@@ -298,8 +331,6 @@
         'ehi03': '0-3km Energy Helicity',
         'scp': 'Supercell Composite',
         'stp': 'Sig Tornado Parameter',
-        
-        // RAP
         'wind_gusts': 'Wind Gusts',
         'pwat': 'Precipitable Water',
         '200wh': '200mb Height/Wind',
@@ -320,8 +351,6 @@
         'mucape': 'Most Unstable CAPE',
         'sbcape': 'Surface Based CAPE',
         'sbli': 'Surface Lifted Index',
-        
-        // NAM
         'qpf_003h-imp': '3hr QPF',
         'qpf_024h-imp': '24hr QPF',
         'uh03_max': 'Updraft Helicity 0-3km',
@@ -330,13 +359,69 @@
         'sbcape_hodo': 'SB CAPE Hodograph'
       };
 
-      // Model tabs
       const modelTabs = document.querySelectorAll('.model-tab');
       const modelParams = document.querySelectorAll('.model-params');
 
       let currentParam = 'ref1km_ptype';
 
-      // Tab switching
+      // Native image dimensions
+      const IMAGE_WIDTH = 279;
+      const IMAGE_HEIGHT = 209;
+
+      // Sounding locations with adjusted percentage-based coordinates (x - 5, y + 8)
+      const soundingLocations = [
+  { id: 'WPL', name: 'WPL', percentX: (155 / IMAGE_WIDTH) * 100, percentY: (19 / IMAGE_HEIGHT) * 100 },
+  { id: 'WMW', name: 'WMW', percentX: (225 / IMAGE_WIDTH) * 100, percentY: (41 / IMAGE_HEIGHT) * 100 },
+  { id: 'YQI', name: 'YQI', percentX: (270 / IMAGE_WIDTH) * 100, percentY: (44 / IMAGE_HEIGHT) * 100 },
+  { id: 'SGF', name: 'SGF', percentX: (152 / IMAGE_WIDTH) * 100, percentY: (109 / IMAGE_HEIGHT) * 100 },
+  { id: 'FWD', name: 'FWD', percentX: (133 / IMAGE_WIDTH) * 100, percentY: (137 / IMAGE_HEIGHT) * 100 },
+  { id: 'BRO', name: 'BRO', percentX: (132 / IMAGE_WIDTH) * 100, percentY: (181 / IMAGE_HEIGHT) * 100 },
+  { id: 'CRP', name: 'CRP', percentX: (133 / IMAGE_WIDTH) * 100, percentY: (168 / IMAGE_HEIGHT) * 100 },
+  { id: 'LCH', name: 'LCH', percentX: (155 / IMAGE_WIDTH) * 100, percentY: (154 / IMAGE_HEIGHT) * 100 },
+  { id: 'ABR', name: 'ABR', percentX: (126 / IMAGE_WIDTH) * 100, percentY: (58 / IMAGE_HEIGHT) * 100 },
+  { id: 'TFX', name: 'TFX', percentX: (72 / IMAGE_WIDTH) * 100, percentY: (41 / IMAGE_HEIGHT) * 100 },
+  { id: 'MPX', name: 'MPX', percentX: (149 / IMAGE_WIDTH) * 100, percentY: (60 / IMAGE_HEIGHT) * 100 },
+  { id: 'DVN', name: 'DVN', percentX: (163 / IMAGE_WIDTH) * 100, percentY: (80 / IMAGE_HEIGHT) * 100 },
+  { id: 'ILX', name: 'ILX', percentX: (171 / IMAGE_WIDTH) * 100, percentY: (88 / IMAGE_HEIGHT) * 100 },
+  { id: 'LIX', name: 'LIX', percentX: (173 / IMAGE_WIDTH) * 100, percentY: (151 / IMAGE_HEIGHT) * 100 },
+  { id: 'DDC', name: 'DDC', percentX: (120 / IMAGE_WIDTH) * 100, percentY: (106 / IMAGE_HEIGHT) * 100 },
+  { id: 'AMA', name: 'AMA', percentX: (111 / IMAGE_WIDTH) * 100, percentY: (122 / IMAGE_HEIGHT) * 100 },
+  { id: 'MAF', name: 'MAF', percentX: (108 / IMAGE_WIDTH) * 100, percentY: (143 / IMAGE_HEIGHT) * 100 },
+  { id: 'SHV', name: 'SHV', percentX: (152 / IMAGE_WIDTH) * 100, percentY: (139 / IMAGE_HEIGHT) * 100 },
+  { id: 'JAN', name: 'JAN', percentX: (171 / IMAGE_WIDTH) * 100, percentY: (139 / IMAGE_HEIGHT) * 100 },
+  { id: 'BMX', name: 'BMX', percentX: (188 / IMAGE_WIDTH) * 100, percentY: (131 / IMAGE_HEIGHT) * 100 },
+  { id: 'BNA', name: 'BNA', percentX: (186 / IMAGE_WIDTH) * 100, percentY: (112 / IMAGE_HEIGHT) * 100 },
+  { id: 'DTX', name: 'DTX', percentX: (197 / IMAGE_WIDTH) * 100, percentY: (71 / IMAGE_HEIGHT) * 100 },
+  { id: 'GRB', name: 'GRB', percentX: (173 / IMAGE_WIDTH) * 100, percentY: (60 / IMAGE_HEIGHT) * 100 },
+  { id: 'GSO', name: 'GSO', percentX: (220 / IMAGE_WIDTH) * 100, percentY: (109 / IMAGE_HEIGHT) * 100 },
+  { id: 'IAD', name: 'IAD', percentX: (228 / IMAGE_WIDTH) * 100, percentY: (87 / IMAGE_HEIGHT) * 100 },
+  { id: 'INL', name: 'INL', percentX: (148 / IMAGE_WIDTH) * 100, percentY: (37 / IMAGE_HEIGHT) * 100 },
+  { id: 'KEY', name: 'KEY', percentX: (224 / IMAGE_WIDTH) * 100, percentY: (181 / IMAGE_HEIGHT) * 100 },
+  { id: 'JAX', name: 'JAX', percentX: (217 / IMAGE_WIDTH) * 100, percentY: (144 / IMAGE_HEIGHT) * 100 },
+  { id: 'CHS', name: 'CHS', percentX: (223 / IMAGE_WIDTH) * 100, percentY: (127 / IMAGE_HEIGHT) * 100 },
+  { id: 'MHX', name: 'MHX', percentX: (236 / IMAGE_WIDTH) * 100, percentY: (112 / IMAGE_HEIGHT) * 100 },
+  { id: 'PIT', name: 'PIT', percentX: (213 / IMAGE_WIDTH) * 100, percentY: (81 / IMAGE_HEIGHT) * 100 },
+  { id: 'BUF', name: 'BUF', percentX: (217 / IMAGE_WIDTH) * 100, percentY: (65 / IMAGE_HEIGHT) * 100 },
+  { id: 'WAL', name: 'WAL', percentX: (239 / IMAGE_WIDTH) * 100, percentY: (91 / IMAGE_HEIGHT) * 100 },
+  { id: 'ALB', name: 'ALB', percentX: (239 / IMAGE_WIDTH) * 100, percentY: (60 / IMAGE_HEIGHT) * 100 },
+  { id: 'FGZ', name: 'FGZ', percentX: (60 / IMAGE_WIDTH) * 100, percentY: (117 / IMAGE_HEIGHT) * 100 },
+  { id: 'NKX', name: 'NKX', percentX: (30 / IMAGE_WIDTH) * 100, percentY: (127 / IMAGE_HEIGHT) * 100 },
+  { id: 'REV', name: 'REV', percentX: (25 / IMAGE_WIDTH) * 100, percentY: (82 / IMAGE_HEIGHT) * 100 },
+  { id: 'MFR', name: 'MFR', percentX: (16 / IMAGE_WIDTH) * 100, percentY: (63 / IMAGE_HEIGHT) * 100 },
+  { id: 'SLE', name: 'SLE', percentX: (20 / IMAGE_WIDTH) * 100, percentY: (46 / IMAGE_HEIGHT) * 100 },
+  { id: 'UIL', name: 'UIL', percentX: (18 / IMAGE_WIDTH) * 100, percentY: (29 / IMAGE_HEIGHT) * 100 },
+  { id: 'TOP', name: 'TOP', percentX: (140 / IMAGE_WIDTH) * 100, percentY: (98 / IMAGE_HEIGHT) * 100 },
+  { id: 'ABQ', name: 'ABQ', percentX: (85 / IMAGE_WIDTH) * 100, percentY: (121 / IMAGE_HEIGHT) * 100 },
+  { id: 'SLC', name: 'SLC', percentX: (64 / IMAGE_WIDTH) * 100, percentY: (82 / IMAGE_HEIGHT) * 100 },
+  { id: 'BOI', name: 'BOI', percentX: (47 / IMAGE_WIDTH) * 100, percentY: (61 / IMAGE_HEIGHT) * 100 },
+  { id: 'LKN', name: 'LKN', percentX: (47 / IMAGE_WIDTH) * 100, percentY: (79 / IMAGE_HEIGHT) * 100 },
+  { id: 'RIW', name: 'RIW', percentX: (81 / IMAGE_WIDTH) * 100, percentY: (70 / IMAGE_HEIGHT) * 100 },
+  { id: 'GJT', name: 'GJT', percentX: (79 / IMAGE_WIDTH) * 100, percentY: (95 / IMAGE_HEIGHT) * 100 },
+  { id: 'DRT', name: 'DRT', percentX: (114 / IMAGE_WIDTH) * 100, percentY: (159 / IMAGE_HEIGHT) * 100 },
+  { id: 'VEF', name: 'VEF', percentX: (44 / IMAGE_WIDTH) * 100, percentY: (109 / IMAGE_HEIGHT) * 100 },
+  { id: 'OUN', name: 'OUN', percentX: (132 / IMAGE_WIDTH) * 100, percentY: (122 / IMAGE_HEIGHT) * 100 }
+];
+
       modelTabs.forEach(tab => {
         tab.addEventListener('click', () => {
           modelTabs.forEach(t => t.classList.remove('active'));
@@ -363,12 +448,10 @@
 
           if (data.error) throw new Error(data.error);
 
-          // Populate parameter dropdowns if not already populated
           if (hrrrSurfaceParams.children.length === 0) {
             populateParamDropdowns(data.modelTypes);
           }
 
-          // Render images
           renderImages(data);
         } catch (error) {
           console.error('Error:', error);
@@ -387,88 +470,149 @@
           rap: 'RAP',
           nam4km: 'NAM 3km',
           nadocast: 'Nadocast',
-          spc_outlook: 'SPC Outlook'
+          spc_outlook: 'SPC Outlook',
+          noaa_soundings: '*UNFINISHED* NOAA Soundings'
         };
 
-        ['hrrr', 'rap', 'nam4km', 'nadocast', 'spc_outlook'].forEach(key => {
+        ['hrrr', 'rap', 'nam4km', 'nadocast', 'spc_outlook', 'noaa_soundings'].forEach(key => {
           const div = document.createElement('div');
           div.className = 'bg-white p-4 rounded-lg shadow h-full';
-          div.innerHTML = `
-            <h2 class="text-lg font-semibold mb-2">${displayNames[key]}</h2>
-            ${data[key] ? `<img src="${data[key]}" alt="${key} weather model" class="w-full h-auto rounded max-h-96 object-contain">` : '<p class="text-gray-500">Image not available</p>'}
-          `;
+          
+          if (key === 'noaa_soundings' && data[key]) {
+            const container = document.createElement('div');
+            container.className = 'sounding-container relative';
+            container.innerHTML = `
+              <h2 class="text-lg font-semibold mb-2">${displayNames[key]}</h2>
+              <img id="soundings-img" src="${data[key].baseImage}" alt="NOAA Soundings map" class="w-full h-auto rounded max-h-96 object-contain">
+            `;
+            
+            const img = container.querySelector('#soundings-img');
+            img.onload = () => {
+              soundingLocations.forEach(loc => {
+                const btn = document.createElement('div');
+                btn.className = 'sounding-btn';
+                btn.style.left = `${loc.percentX}%`;
+                btn.style.top = `${loc.percentY}%`;
+                btn.title = loc.name;
+                btn.dataset.stationId = loc.id;
+                btn.addEventListener('click', () => {
+                  fetchSoundingImage(loc.id, fhSlider.value, container);
+                });
+                container.appendChild(btn);
+              });
+            };
+            
+            div.appendChild(container);
+          } else {
+            div.innerHTML = `
+              <h2 class="text-lg font-semibold mb-2">${displayNames[key]}</h2>
+              ${data[key] ? `<img src="${data[key]}" alt="${key} weather model" class="w-full h-auto rounded max-h-96 object-contain">` : '<p class="text-gray-500">Image not available</p>'}
+            `;
+          }
+          
           imageGrid.appendChild(div);
         });
       };
 
+      const fetchSoundingImage = async (stationId, fh, container) => {
+        try {
+          const response = await fetch(`/sounding?station=${stationId}&fh=${fh}`);
+          const data = await response.json();
+          
+          if (data.error) throw new Error(data.error);
+          
+          const img = container.querySelector('#soundings-img');
+          img.src = data.image;
+          
+          const existingButtons = container.querySelectorAll('.sounding-btn, .sounding-close-btn');
+          existingButtons.forEach(btn => btn.remove());
+          
+          const closeBtn = document.createElement('div');
+          closeBtn.className = 'sounding-close-btn';
+          closeBtn.textContent = 'Close';
+          closeBtn.addEventListener('click', () => {
+            img.src = `/cache/noaa_soundings_base_${fhSlider.value}.gif`;
+            img.onload = () => {
+              soundingLocations.forEach(loc => {
+                const btn = document.createElement('div');
+                btn.className = 'sounding-btn';
+                btn.style.left = `${loc.percentX}%`;
+                btn.style.top = `${loc.percentY}%`;
+                btn.title = loc.name;
+                btn.dataset.stationId = loc.id;
+                btn.addEventListener('click', () => {
+                  fetchSoundingImage(loc.id, fhSlider.value, container);
+                });
+                container.appendChild(btn);
+              });
+            };
+            closeBtn.remove();
+          });
+          
+          container.appendChild(closeBtn);
+        } catch (error) {
+          console.error('Error fetching sounding:', error);
+          errorDiv.textContent = `Error fetching sounding: ${error.message}`;
+          errorDiv.classList.remove('hidden');
+        }
+      };
+
       const populateParamDropdowns = (modelTypes) => {
-        // HRRR Surface
         modelTypes.HRRR.surface.forEach(param => {
           const btn = createParamButton(param);
           hrrrSurfaceParams.appendChild(btn);
         });
 
-        // HRRR Upper Air
         modelTypes.HRRR.upper_air.forEach(param => {
           const btn = createParamButton(param);
           hrrrUpperAirParams.appendChild(btn);
         });
 
-        // HRRR Severe
         modelTypes.HRRR.severe.forEach(param => {
           const btn = createParamButton(param);
           hrrrSevereParams.appendChild(btn);
         });
 
-        // RAP Surface
         modelTypes.RAP.surface.forEach(param => {
           const btn = createParamButton(param);
           rapSurfaceParams.appendChild(btn);
         });
 
-        // RAP Upper Air
         modelTypes.RAP.upper_air.forEach(param => {
           const btn = createParamButton(param);
           rapUpperAirParams.appendChild(btn);
         });
 
-        // RAP Upper Air Moisture
         modelTypes.RAP.upper_air_moisture.forEach(param => {
           const btn = createParamButton(param);
           rapUpperAirMoistureParams.appendChild(btn);
         });
 
-        // RAP Upper Air Dynamics
         modelTypes.RAP.upper_air_dynamics.forEach(param => {
           const btn = createParamButton(param);
           rapUpperAirDynamicsParams.appendChild(btn);
         });
 
-        // RAP Severe
         modelTypes.RAP.severe.forEach(param => {
           const btn = createParamButton(param);
           rapSevereParams.appendChild(btn);
         });
 
-        // NAM Surface
         modelTypes.NAM_4km.surface.forEach(param => {
           const btn = createParamButton(param);
           namSurfaceParams.appendChild(btn);
         });
 
-        // NAM Upper Air
         modelTypes.NAM_4km.upper_air.forEach(param => {
           const btn = createParamButton(param);
           namUpperAirParams.appendChild(btn);
         });
 
-        // NAM Upper Air Dynamics
         modelTypes.NAM_4km.upper_air_dynamics.forEach(param => {
           const btn = createParamButton(param);
           namUpperAirDynamicsParams.appendChild(btn);
         });
 
-        // NAM Severe
         modelTypes.NAM_4km.severe.forEach(param => {
           const btn = createParamButton(param);
           namSevereParams.appendChild(btn);
@@ -479,22 +623,20 @@
         const btn = document.createElement('button');
         btn.className = 'param-btn';
         
-        // Use the display name if available, otherwise format the parameter name
         btn.textContent = paramDisplayNames[param] || 
           param.replace(/_/g, ' ')
                .replace(/-imp/g, '')
                .replace(/^2m /, '2m ')
-               .replace(/([a-z])([A-Z])/g, '$1 $2') // Add space before capital letters
-               .replace(/\b(\w)/g, s => s.toUpperCase()); // Capitalize first letters
+               .replace(/([a-z])([A-Z])/g, '$1 $2')
+               .replace(/\b(\w)/g, s => s.toUpperCase());
         
         btn.onclick = () => {
-          currentParam = param; // Still use the original parameter for backend
+          currentParam = param;
           fetchImages(param, fhSlider.value);
         };
         return btn;
       };
 
-      // Event listeners
       fhSlider.addEventListener('input', () => {
         const fh = fhSlider.value;
         fhLabel.textContent = `${fh}h`;
@@ -523,11 +665,8 @@
         fetchImages(currentParam, fhSlider.value);
       });
 
-      // Initial load
       fetchImages(currentParam, 1);
     });
   </script>
-</body>
-</html>
 </body>
 </html>
