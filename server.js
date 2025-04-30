@@ -13,9 +13,6 @@ const modelTypes = {
   HRRR: {
     surface: [
       'ref1km_ptype', 
-      '2m_temperature', 
-      'precipitation_rate', 
-      'cloud_cover',
       'sfcrh',                  // 2m AGL Relative Humidity
       'sfct-imp',               // 2m AGL Temperature
       'sfctd-imp',              // 2m AGL Dew Point
@@ -63,9 +60,6 @@ const modelTypes = {
   RAP: {
     surface: [
       'ref1km_ptype',
-      '2m_temperature',
-      'precipitation_rate',
-      'wind_gusts',
       'sfct-imp',           // 2m AGL Temperature
       'sfctd-imp',          // 2m AGL Dew Point
       'sfcwind_mslp',       // MSLP + 10m AGL Winds
@@ -124,8 +118,6 @@ const modelTypes = {
   NAM_4km: {
     surface: [
       'ref1km_ptype',
-      '2m_temperature',
-      'precipitation_rate',
       'sfcrh',               // 2m Relative Humidity
       'sfct-imp',           // 2m Temperature
       'sfctd-imp',          // 2m Dew Point
@@ -168,7 +160,6 @@ const modelTypes = {
       'scp',                // Supercell Composite
       'stp',                // Sig Tornado Parameter
       'uh03_max',           // Updraft Helicity 0-3km
-      'uh25_003h',          // Updraft Helicity 2-5km
       'crossover',          // SB CAPE
       'sbcape_hodo'         // SB CAPE Hodograph
     ]
